@@ -23,7 +23,6 @@ export async function syncCustomers() {
     await sqliteRepo.clear();
 
     const dimCustomers: Partial<DimCustomer>[] = customers.map((a) => ({
-      customerkey: 50000 + a.customerId,
       customerId: a.customerId,
       firstName: a.firstName,
       lastName: a.lastName,
