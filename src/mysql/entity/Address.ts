@@ -24,8 +24,9 @@ export class Address {
     @Column({ nullable: false, length: 20 })
     phone: string;
 
-    @Column({type: "point", nullable: true})
-    location: { x: number; y: number } | null;
+    @Column({ type: 'geometry', select: false })
+    location: any;
+
 
     @Column({ 
         name: "last_update", 

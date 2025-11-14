@@ -18,7 +18,7 @@ export class DimCustomer {
     active: boolean;
 
     @Column()
-    ciyty: string;
+    city: string;
 
     @Column()
     country: string;
