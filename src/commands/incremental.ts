@@ -7,7 +7,6 @@ import { syncFilmActorsIncremental } from "../sync/sync-film-actor";
 import { syncFilmCategoriesIncremental } from "../sync/sync-film-category";
 import { syncPaymentsIncremental } from "../sync/sync-payment";
 import { syncRentalsIncremental } from "../sync/sync-rental";
-import { syncDate } from "../sync/sync-date";
 
 export async function incremental() {
   console.log("=== INCREMENTAL SYNC START ===");
@@ -21,7 +20,6 @@ export async function incremental() {
   await syncFilmCategoriesIncremental();
   await syncPaymentsIncremental();
   await syncRentalsIncremental();
-  await syncDate();
 
   console.log("=== INCREMENTAL SYNC FINISHED ===");
 }

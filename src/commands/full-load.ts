@@ -7,7 +7,7 @@ import { syncFilmActorsFull } from "../sync/sync-film-actor";
 import { syncFilmCategoriesFull } from "../sync/sync-film-category";
 import { syncPaymentsFull } from "../sync/sync-payment";
 import { syncRentalsFull } from "../sync/sync-rental";
-import { syncDate } from "../sync/sync-date";
+import { syncDateFull } from "../sync/sync-date";
 
 export async function fullLoad() {
   console.log("=== FULL LOAD START ===");
@@ -21,7 +21,7 @@ export async function fullLoad() {
   await syncFilmCategoriesFull();
   await syncPaymentsFull();
   await syncRentalsFull();
-  await syncDate();
+  await syncDateFull();
 
   console.log("=== FULL LOAD FINISHED ===");
 }

@@ -16,8 +16,8 @@
       "typeorm": "^0.3.27"
    },
    "scripts": {
-      "start": "ts-node src/index.ts",
-      "sync": "ts-node src/index.ts",
+      "start": "ts-node src/cli.ts",
+      "sync": "ts-node src/cli.ts",
       "typeorm": "typeorm-ts-node-commonjs"
    }
 }
