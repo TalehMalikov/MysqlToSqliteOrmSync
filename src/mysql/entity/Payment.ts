@@ -1,4 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm"
+import { Customer } from "./Customer";
+import { Staff } from "./Staff";
+import { Rental } from "./Rental";
 
 @Entity({ name: "payment" })
 export class Payment {
@@ -22,4 +25,16 @@ export class Payment {
 
     @Column({ name: "last_update", nullable: false, type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     lastUpdate: Date;
+
+    @ManyToOne(() => Customer)
+    @JoinColumn({ name: "customer_id" })
+    customer: Customer;
+
+    @ManyToOne(() => Staff)
+    @JoinColumn({ name: "staff_id" })
+    staff: Staff;
+
+    @ManyToOne(() => Rental)
+    @JoinColumn({ name: "rental_id" })
+    rental: Rental;
 }

@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm"
+import { FilmActor } from "./FilmActor";
 
 @Entity({ name: "actor" })
 export class Actor {
@@ -14,4 +15,7 @@ export class Actor {
 
     @Column({ name: "last_update", nullable: false, type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     lastUpdate: Date;
+
+    @OneToMany(() => FilmActor, filmActor => filmActor.actor)
+    filmActors: FilmActor[];
 }

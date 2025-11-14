@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm"
+import { Inventory } from "./Inventory";
 
 @Entity({ name: "store" })
 export class Store {
@@ -13,4 +14,7 @@ export class Store {
 
     @Column({ name: "last_update", nullable: false, type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     lastUpdate: Date;
+
+    @OneToMany(() => Inventory, inventory => inventory.store)
+    inventories: Inventory[];
 }

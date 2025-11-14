@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from "typeorm"
+import { Address } from "./Address";
+import { Store } from "./Store";
 
 @Entity({ name: "customer" })
 export class Customer {
@@ -28,4 +30,12 @@ export class Customer {
 
     @Column({ name: "last_update", nullable: false, type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     lastUpdate: Date;
+
+    @ManyToOne(() => Address)
+    @JoinColumn({ name: "address_id" })
+    address: Address;
+
+    @ManyToOne(() => Store)
+    @JoinColumn({ name: "store_id" })
+    store: Store;
 }

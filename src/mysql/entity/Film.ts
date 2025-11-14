@@ -1,8 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, JoinColumn, ManyToOne, OneToMany } from "typeorm"
+import { Language } from "./Language"
+import { FilmActor } from "./FilmActor"
+import { Inventory } from "./Inventory"
 
 @Entity({ name: "film" })
 export class Film {
-
     @PrimaryGeneratedColumn({ name: "film_id" })
     filmId: number
 
@@ -47,4 +49,18 @@ export class Film {
 
     @Column({name: "total_sales", type: "int", nullable: true })
     totalSales: number
+
+    @ManyToOne(() => Language)
+    @JoinColumn({ name: "language_id" })
+    language: Language
+
+    @ManyToOne(() => Language)
+    @JoinColumn({ name: "original_language_id" })
+    originalLanguage: Language
+    
+    @OneToMany(() => FilmActor, filmActor => filmActor.film)
+    filmActors: FilmActor[];
+
+    @OneToMany(() => Inventory, inventory => inventory.film)
+    inventories: Inventory[];
 }
