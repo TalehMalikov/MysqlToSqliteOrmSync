@@ -1,38 +1,52 @@
 import { SqliteService } from "../sqlite/sqlite.service";
 import { DimDate } from "../sqlite/entity/dimensions/DimDate";
 
-function generateDateKey(timestamp: Date | string): number {
-  const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return parseInt(`${year}${month}${day}`);
+function generateDateKey(date: Date): number {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return parseInt(`${y}${m}${d}`);
 }
 
-export async function syncDate() {
+export async function syncDateFull() {
   const sqlite = new SqliteService();
-
   await sqlite.connect();
 
   try {
-    const sqliteRepo = sqlite.getRepo(DimDate);
+    console.log("=== Building dim_date ===");
 
-    await sqliteRepo.clear();
+    const repo = sqlite.getRepo(DimDate);
+    await repo.clear();
 
-    const dimDate: Partial<DimDate> =({
-      dateKey: generateDateKey(new Date()),
-      date: new Date(),
-      year: new Date().getFullYear(),
-      quarter: Math.floor((new Date().getMonth() + 3) / 3),
-      month: new Date().getMonth() + 1,
-      dayOfMonth: new Date().getDate(),
-      dayOfWeek: new Date().getDay(),
-      isWeekend: [0, 6].includes(new Date().getDay()),
-    });
+    const start = new Date(2000, 0, 1);
+    const end   = new Date(2030, 11, 31);
 
-    await sqliteRepo.save(dimDate);
+    const rows: Partial<DimDate>[] = [];
 
-    console.log(`SQLite: inserted 1 dim_date rows`);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const day = d.getDate();
+
+      const dayOfWeek = d.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6 ? 1 : 0;
+
+      const quarter = Math.floor((month - 1) / 3) + 1;
+
+      rows.push({
+        dateKey: generateDateKey(d),
+        date: new Date(d),
+        year,
+        quarter,
+        month,
+        dayOfMonth: day,
+        dayOfWeek,
+        isWeekend,
+      });
+    }
+
+    await repo.save(rows);
+    console.log(`Inserted ${rows.length} rows into dim_date`);
   } finally {
     await sqlite.close();
   }

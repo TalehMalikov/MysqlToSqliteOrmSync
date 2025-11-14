@@ -6,6 +6,7 @@ import { BridgeFilmActor } from "../sqlite/entity/bridges/BridgeFilmActor";
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
 import { DimActor } from "../sqlite/entity/dimensions/DimActor";
 import { ValidationResult } from "../types/validation";
+import { updateLastSync } from "../utils/sync-state";
 
 export async function syncFilmActorsFull() {
   const mysql = new MysqlService();
@@ -46,6 +47,13 @@ export async function syncFilmActorsFull() {
     }
 
     console.log(`SQLite: inserted ${bridgeFilmActors.length} bridge_film_actor rows`);
+
+    const newestLastUpdate = filmActors.reduce(
+      (max, fa) => (fa.lastUpdate > max ? fa.lastUpdate : max),
+      new Date(0)
+    );
+    await updateLastSync("bridge_film_actor", newestLastUpdate);
+
   } finally {
     await mysql.close();
     await sqlite.close();

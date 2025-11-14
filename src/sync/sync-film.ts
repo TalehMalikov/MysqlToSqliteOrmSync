@@ -4,6 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Film } from "../mysql/entity/Film";
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
 import { ValidationResult } from "../types/validation";
+import { updateLastSync } from "../utils/sync-state";
 
 export async function syncFilmsFull() {
   const mysql = new MysqlService();
@@ -37,6 +38,13 @@ export async function syncFilmsFull() {
     await sqliteRepo.save(dimFilms);
 
     console.log(`SQLite: inserted ${dimFilms.length} dim_film rows`);
+
+    const newestLastUpdate = films.reduce(
+      (max, f) => (f.lastUpdate > max ? f.lastUpdate : max),
+      new Date(0)
+    );
+    await updateLastSync("dim_film", newestLastUpdate);
+        
   } finally {
     await mysql.close();
     await sqlite.close();

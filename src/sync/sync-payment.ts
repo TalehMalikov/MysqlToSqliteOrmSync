@@ -6,6 +6,7 @@ import { FactPayment } from "../sqlite/entity/facts/FactPayment";
 import { DimCustomer } from "../sqlite/entity/dimensions/DimCustomer";
 import { DimStore } from "../sqlite/entity/dimensions/DimStore";
 import { ValidationResult } from "../types/validation";
+import { updateLastSync } from "../utils/sync-state";
 
 function generateDateKey(timestamp: Date | string): number {
   const date = new Date(timestamp);
@@ -61,6 +62,13 @@ export async function syncPaymentsFull() {
     }
 
     console.log(`SQLite: inserted ${factPayments.length} fact_payment rows`);
+
+    const newestLastUpdate = payments.reduce(
+      (max, p) => (p.lastUpdate > max ? p.lastUpdate : max),
+      new Date(0)
+    );
+    await updateLastSync("fact_payment", newestLastUpdate);
+        
   } finally {
     await mysql.close();
     await sqlite.close();

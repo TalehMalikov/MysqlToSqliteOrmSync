@@ -6,6 +6,7 @@ import { BridgeFilmCategory } from "../sqlite/entity/bridges/BridgeFilmCategory"
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
 import { DimCategory } from "../sqlite/entity/dimensions/DimCategory";
 import { ValidationResult } from "../types/validation";
+import { updateLastSync } from "../utils/sync-state";
 
 export async function syncFilmCategoriesFull() {
   const mysql = new MysqlService();
@@ -46,6 +47,13 @@ export async function syncFilmCategoriesFull() {
     }
 
     console.log(`SQLite: inserted ${bridgeFilmCategories.length} bridge_film_category rows`);
+
+    const newestLastUpdate = filmCategories.reduce(
+      (max, fc) => (fc.lastUpdate > max ? fc.lastUpdate : max),
+      new Date(0)
+    );
+    await updateLastSync("bridge_film_category", newestLastUpdate);
+
   } finally {
     await mysql.close();
     await sqlite.close();

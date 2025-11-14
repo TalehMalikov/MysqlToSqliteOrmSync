@@ -7,6 +7,7 @@ import { DimCustomer } from "../sqlite/entity/dimensions/DimCustomer";
 import { DimStore } from "../sqlite/entity/dimensions/DimStore";
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
 import { ValidationResult } from "../types/validation";
+import { updateLastSync } from "../utils/sync-state";
 
 function generateDateKey(timestamp: Date | string | null): number | null {
   if (!timestamp) return null;
@@ -75,6 +76,13 @@ export async function syncRentalsFull() {
     }
 
     console.log(`SQLite: inserted ${factRentals.length} fact_rental rows`);
+
+    const newestLastUpdate = rentals.reduce(
+      (max, r) => (r.lastUpdate > max ? r.lastUpdate : max),
+      new Date(0)
+    );
+    await updateLastSync("fact_rental", newestLastUpdate);
+        
   } finally {
     await mysql.close();
     await sqlite.close();

@@ -4,6 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Customer } from "../mysql/entity/Customer";
 import { DimCustomer } from "../sqlite/entity/dimensions/DimCustomer";
 import { ValidationResult } from "../types/validation";
+import { updateLastSync } from "../utils/sync-state";
 
 export async function syncCustomersFull() {
   const mysql = new MysqlService();
@@ -34,6 +35,12 @@ export async function syncCustomersFull() {
     }));
 
     await sqliteRepo.save(dimCustomers);
+
+    const newestLastUpdate = customers.reduce(
+      (max, c) => (c.lastUpdate > max ? c.lastUpdate : max),
+      new Date(0)
+    );
+    await updateLastSync("dim_customer", newestLastUpdate);
 
     console.log(`SQLite: inserted ${dimCustomers.length} dim_customer rows`);
   } finally {

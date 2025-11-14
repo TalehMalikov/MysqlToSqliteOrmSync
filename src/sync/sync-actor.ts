@@ -4,6 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Actor } from "../mysql/entity/Actor";
 import { DimActor } from "../sqlite/entity/dimensions/DimActor";
 import { ValidationResult } from "../types/validation";
+import { updateLastSync } from "../utils/sync-state";
 
 export async function syncActorsFull() {
   const mysql = new MysqlService();
@@ -31,6 +32,13 @@ export async function syncActorsFull() {
     await sqliteRepo.save(dimActors);
 
     console.log(`SQLite: inserted ${dimActors.length} dim_actor rows`);
+
+    const newestLastUpdate = actors.reduce(
+      (max, a) => (a.lastUpdate > max ? a.lastUpdate : max),
+      new Date(0)
+    );
+    await updateLastSync("dim_actor", newestLastUpdate);
+
   } finally {
     await mysql.close();
     await sqlite.close();

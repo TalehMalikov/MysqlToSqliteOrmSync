@@ -23,6 +23,6 @@ export class DimDate {
     @Column({ name: "day_of_week" })
     dayOfWeek: number;
 
-    @Column({ name: "is_weekend" })
-    isWeekend: boolean;
+    @Column({name: "is_weekend", type: "integer" })
+    isWeekend: number; 
 }

@@ -4,6 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Category } from "../mysql/entity/Category";
 import { DimCategory } from "../sqlite/entity/dimensions/DimCategory";
 import { ValidationResult } from "../types/validation";
+import { updateLastSync } from "../utils/sync-state";
 
 export async function syncCategoriesFull() {
   const mysql = new MysqlService();
@@ -30,6 +31,13 @@ export async function syncCategoriesFull() {
     await sqliteRepo.save(dimCategories);
 
     console.log(`SQLite: inserted ${dimCategories.length} dim_category rows`);
+
+    const newestLastUpdate = categories.reduce(
+          (max, c) => (c.lastUpdate > max ? c.lastUpdate : max),
+          new Date(0)
+        );
+    await updateLastSync("dim_category", newestLastUpdate);
+
   } finally {
     await mysql.close();
     await sqlite.close();

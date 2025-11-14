@@ -4,6 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Store } from "../mysql/entity/Store";
 import { DimStore } from "../sqlite/entity/dimensions/DimStore";
 import { ValidationResult } from "../types/validation";
+import { updateLastSync } from "../utils/sync-state";
 
 export async function syncStoresFull() {
   const mysql = new MysqlService();
@@ -16,15 +17,15 @@ export async function syncStoresFull() {
     const mysqlRepo = mysql.getRepo(Store);
     const sqliteRepo = sqlite.getRepo(DimStore);
 
-    const films = await mysqlRepo.find({
+    const stores = await mysqlRepo.find({
         relations: ['address', 'address.city', 'address.city.country']
     });
 
-    console.log(`MySQL: read ${films.length} films`);
+    console.log(`MySQL: read ${stores.length} stores`);
 
     await sqliteRepo.clear();
 
-    const dimStores: Partial<DimStore>[] = films
+    const dimStores: Partial<DimStore>[] = stores
     .map((a) => ({
       storeId: a.storeId,
       city: a.address?.city?.city || null,
@@ -35,6 +36,13 @@ export async function syncStoresFull() {
     await sqliteRepo.save(dimStores);
 
     console.log(`SQLite: inserted ${dimStores.length} dim_store rows`);
+
+    const newestLastUpdate = stores.reduce(
+      (max, s) => (s.lastUpdate > max ? s.lastUpdate : max),
+      new Date(0)
+    );
+    await updateLastSync("dim_store", newestLastUpdate);
+        
   } finally {
     await mysql.close();
     await sqlite.close();

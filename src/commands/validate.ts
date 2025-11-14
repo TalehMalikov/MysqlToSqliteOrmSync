@@ -9,7 +9,7 @@ import { validatePayments } from "../sync/sync-payment";
 import { validateRentals } from "../sync/sync-rental";
 import { ValidationResult } from "../types/validation";
 
-export async function validateCommand() {
+export async function validate() {
   console.log("=== VALIDATE (last 30 days) ===");
 
   const results: ValidationResult[] = [];
