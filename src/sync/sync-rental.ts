@@ -6,6 +6,7 @@ import { FactRental } from "../sqlite/entity/facts/FactRental";
 import { DimCustomer } from "../sqlite/entity/dimensions/DimCustomer";
 import { DimStore } from "../sqlite/entity/dimensions/DimStore";
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
+import { ValidationResult } from "../types/validation";
 
 function generateDateKey(timestamp: Date | string | null): number | null {
   if (!timestamp) return null;
@@ -90,6 +91,60 @@ export async function syncRentalsIncremental() {
   try{
     // Implement incremental sync logic here
   }
+  finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function validateRentals() : Promise<ValidationResult> {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try {
+    console.log("=== Rental validation started ===");
+
+    const now = new Date();
+    const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const mysqlRepo = mysql.getRepo(Rental);
+    const mysqlRows = await mysqlRepo.find();
+
+    const sqliteRepo = sqlite.getRepo(FactRental);
+    const sqliteRows = await sqliteRepo.find();
+
+    const inWindow = (d: Date) => d >= from && d < now;
+
+    const mysqlFiltered = mysqlRows.filter(r => inWindow(r.lastUpdate));
+    const sqliteFiltered = sqliteRows.filter(r => inWindow(r.lastUpdate));
+
+    const mysqlCount = mysqlFiltered.length;
+    const sqliteCount = sqliteFiltered.length;
+
+    const ok = mysqlCount === sqliteCount;
+
+    console.log("=== Rental validation completed ===");
+
+    return {
+    name: "rentals_last_30_days",
+    ok,
+    details: `MySQL: count=${mysqlCount} ` +
+             `SQLite: count=${sqliteCount}`
+    };
+  }
+
+  catch (err) {
+    console.error("Rental validation FAILED:", err);
+    return {
+      name: "rentals_last_30_days",
+      ok: false,
+      details: "Validation threw an error: " + (err as any).message
+    };
+  }
+
   finally {
     await mysql.close();
     await sqlite.close();

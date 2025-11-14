@@ -3,6 +3,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 
 import { Actor } from "../mysql/entity/Actor";
 import { DimActor } from "../sqlite/entity/dimensions/DimActor";
+import { ValidationResult } from "../types/validation";
 
 export async function syncActorsFull() {
   const mysql = new MysqlService();
@@ -46,6 +47,60 @@ export async function syncActorsIncremental() {
   try{
     // Implement incremental sync logic here
   }
+  finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function validateActors() : Promise<ValidationResult> {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try {
+    console.log("=== Actor validation started ===");
+
+    const now = new Date();
+    const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const mysqlRepo = mysql.getRepo(Actor);
+    const mysqlRows = await mysqlRepo.find();
+
+    const sqliteRepo = sqlite.getRepo(DimActor);
+    const sqliteRows = await sqliteRepo.find();
+
+    const inWindow = (d: Date) => d >= from && d < now;
+
+    const mysqlFiltered = mysqlRows.filter(r => inWindow(r.lastUpdate));
+    const sqliteFiltered = sqliteRows.filter(r => inWindow(r.lastUpdate));
+
+    const mysqlCount = mysqlFiltered.length;
+    const sqliteCount = sqliteFiltered.length;
+
+    const ok = mysqlCount === sqliteCount;
+
+    console.log("=== Actor validation completed ===");
+
+    return {
+    name: "actors_last_30_days",
+    ok,
+    details: `MySQL: count=${mysqlCount} ` +
+             `SQLite: count=${sqliteCount}`
+    };
+  }
+
+  catch (err) {
+    console.error("Actor validation FAILED:", err);
+    return {
+      name: "actors_last_30_days",
+      ok: false,
+      details: "Validation threw an error: " + (err as any).message
+    };
+  }
+
   finally {
     await mysql.close();
     await sqlite.close();

@@ -5,6 +5,7 @@ import { FilmActor } from "../mysql/entity/FilmActor";
 import { BridgeFilmActor } from "../sqlite/entity/bridges/BridgeFilmActor";
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
 import { DimActor } from "../sqlite/entity/dimensions/DimActor";
+import { ValidationResult } from "../types/validation";
 
 export async function syncFilmActorsFull() {
   const mysql = new MysqlService();
@@ -61,6 +62,60 @@ export async function syncFilmActorsIncremental() {
   try{
     // Implement incremental sync logic here
   }
+  finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function validateFilmActors() : Promise<ValidationResult> {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try {
+    console.log("=== FilmActor validation started ===");
+
+    const now = new Date();
+    const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const mysqlRepo = mysql.getRepo(FilmActor);
+    const mysqlRows = await mysqlRepo.find();
+
+    const sqliteRepo = sqlite.getRepo(BridgeFilmActor);
+    const sqliteRows = await sqliteRepo.find();
+
+    const inWindow = (d: Date) => d >= from && d < now;
+
+    const mysqlFiltered = mysqlRows.filter(r => inWindow(r.lastUpdate));
+    const sqliteFiltered = sqliteRows.filter(r => inWindow(r.lastUpdate));
+
+    const mysqlCount = mysqlFiltered.length;
+    const sqliteCount = sqliteFiltered.length;
+
+    const ok = mysqlCount === sqliteCount;
+
+    console.log("=== FilmActor validation completed ===");
+
+    return {
+    name: "film_actors_last_30_days",
+    ok,
+    details: `MySQL: count=${mysqlCount} ` +
+             `SQLite: count=${sqliteCount}`
+    };
+  }
+
+  catch (err) {
+    console.error("FilmActor validation FAILED:", err);
+    return {
+      name: "film_actors_last_30_days",
+      ok: false,
+      details: "Validation threw an error: " + (err as any).message
+    };
+  }
+
   finally {
     await mysql.close();
     await sqlite.close();

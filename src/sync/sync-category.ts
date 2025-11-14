@@ -3,6 +3,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 
 import { Category } from "../mysql/entity/Category";
 import { DimCategory } from "../sqlite/entity/dimensions/DimCategory";
+import { ValidationResult } from "../types/validation";
 
 export async function syncCategoriesFull() {
   const mysql = new MysqlService();
@@ -45,6 +46,60 @@ export async function syncCategoriesIncremental() {
   try{
     // Implement incremental sync logic here
   }
+  finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function validateCategories() : Promise<ValidationResult> {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try {
+    console.log("=== Category validation started ===");
+
+    const now = new Date();
+    const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const mysqlRepo = mysql.getRepo(Category);
+    const mysqlRows = await mysqlRepo.find();
+
+    const sqliteRepo = sqlite.getRepo(DimCategory);
+    const sqliteRows = await sqliteRepo.find();
+
+    const inWindow = (d: Date) => d >= from && d < now;
+
+    const mysqlFiltered = mysqlRows.filter(r => inWindow(r.lastUpdate));
+    const sqliteFiltered = sqliteRows.filter(r => inWindow(r.lastUpdate));
+
+    const mysqlCount = mysqlFiltered.length;
+    const sqliteCount = sqliteFiltered.length;
+
+    const ok = mysqlCount === sqliteCount;
+
+    console.log("=== Category validation completed ===");
+
+    return {
+    name: "categories_last_30_days",
+    ok,
+    details: `MySQL: count=${mysqlCount} ` +
+             `SQLite: count=${sqliteCount}`
+    };
+  }
+
+  catch (err) {
+    console.error("Category validation FAILED:", err);
+    return {
+      name: "categories_last_30_days",
+      ok: false,
+      details: "Validation threw an error: " + (err as any).message
+    };
+  }
+
   finally {
     await mysql.close();
     await sqlite.close();
