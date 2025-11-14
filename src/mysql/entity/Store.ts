@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, JoinColumn } from "typeorm"
 import { Inventory } from "./Inventory";
+import { Address } from "./Address";
 
 @Entity({ name: "store" })
 export class Store {
@@ -17,4 +18,8 @@ export class Store {
 
     @OneToMany(() => Inventory, inventory => inventory.store)
     inventories: Inventory[];
+
+    @ManyToOne(() => Address)
+    @JoinColumn({ name: "address_id" })
+    address: Address;
 }

@@ -8,11 +8,11 @@ export class DimStore {
     @Column({ name: "store_id" })
     storeId: number;
 
-    @Column()
-    city: string;
-
-    @Column()
-    country: string;
+    @Column({ nullable: true })
+    city: string | null;
+  
+    @Column({ nullable: true })
+    country: string | null;
 
     @Column({ name: "last_update" })
     lastUpdate: Date;

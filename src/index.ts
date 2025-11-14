@@ -2,7 +2,8 @@ import "reflect-metadata";
 import { syncActors } from "./sync/sync-actor";
 import { syncCategories } from "./sync/sync-category";
 import { syncCustomers } from "./sync/sync-customer";
-import { syncFilms } from "./sync/dim-film";
+import { syncFilms } from "./sync/sync-film";
+import { syncStores } from "./sync/sync-store";
 
 async function main() {
   console.log("=== Start DW sync ===");
@@ -11,7 +12,7 @@ async function main() {
   await syncCategories();
   await syncCustomers();
   await syncFilms();
-  // ...
+  await syncStores();
 
   console.log("=== DW sync finished ===");
 }
