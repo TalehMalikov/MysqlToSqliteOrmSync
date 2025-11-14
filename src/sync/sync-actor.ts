@@ -4,7 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Actor } from "../mysql/entity/Actor";
 import { DimActor } from "../sqlite/entity/dimensions/DimActor";
 
-export async function syncActors() {
+export async function syncActorsFull() {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -31,6 +31,22 @@ export async function syncActors() {
 
     console.log(`SQLite: inserted ${dimActors.length} dim_actor rows`);
   } finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function syncActorsIncremental() {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try{
+    // Implement incremental sync logic here
+  }
+  finally {
     await mysql.close();
     await sqlite.close();
   }

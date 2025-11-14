@@ -4,7 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Category } from "../mysql/entity/Category";
 import { DimCategory } from "../sqlite/entity/dimensions/DimCategory";
 
-export async function syncCategories() {
+export async function syncCategoriesFull() {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -30,6 +30,22 @@ export async function syncCategories() {
 
     console.log(`SQLite: inserted ${dimCategories.length} dim_category rows`);
   } finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function syncCategoriesIncremental() {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try{
+    // Implement incremental sync logic here
+  }
+  finally {
     await mysql.close();
     await sqlite.close();
   }

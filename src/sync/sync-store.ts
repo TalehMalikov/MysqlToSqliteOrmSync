@@ -4,7 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Store } from "../mysql/entity/Store";
 import { DimStore } from "../sqlite/entity/dimensions/DimStore";
 
-export async function syncStores() {
+export async function syncStoresFull() {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -35,6 +35,22 @@ export async function syncStores() {
 
     console.log(`SQLite: inserted ${dimStores.length} dim_store rows`);
   } finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function syncStoresIncremental() {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try{
+    // Implement incremental sync logic here
+  }
+  finally {
     await mysql.close();
     await sqlite.close();
   }

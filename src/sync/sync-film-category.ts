@@ -6,7 +6,7 @@ import { BridgeFilmCategory } from "../sqlite/entity/bridges/BridgeFilmCategory"
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
 import { DimCategory } from "../sqlite/entity/dimensions/DimCategory";
 
-export async function syncFilmCategories() {
+export async function syncFilmCategoriesFull() {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -46,6 +46,22 @@ export async function syncFilmCategories() {
 
     console.log(`SQLite: inserted ${bridgeFilmCategories.length} bridge_film_category rows`);
   } finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function syncFilmCategoriesIncremental() {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try{
+    // Implement incremental sync logic here
+  }
+  finally {
     await mysql.close();
     await sqlite.close();
   }

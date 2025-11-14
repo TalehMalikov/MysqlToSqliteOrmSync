@@ -14,7 +14,7 @@ function generateDateKey(timestamp: Date | string): number {
   return parseInt(`${year}${month}${day}`);
 }
 
-export async function syncPayments() {
+export async function syncPaymentsFull() {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -61,6 +61,22 @@ export async function syncPayments() {
 
     console.log(`SQLite: inserted ${factPayments.length} fact_payment rows`);
   } finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function syncPaymentsIncremental() {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try{
+    // Implement incremental sync logic here
+  }
+  finally {
     await mysql.close();
     await sqlite.close();
   }

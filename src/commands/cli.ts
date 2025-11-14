@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import "reflect-metadata";
 import { init } from "./init";
 import { fullLoad } from "./full-load";

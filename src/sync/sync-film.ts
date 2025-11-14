@@ -4,7 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Film } from "../mysql/entity/Film";
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
 
-export async function syncFilms() {
+export async function syncFilmsFull() {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -37,6 +37,22 @@ export async function syncFilms() {
 
     console.log(`SQLite: inserted ${dimFilms.length} dim_film rows`);
   } finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function syncFilmsIncremental() {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try{
+    // Implement incremental sync logic here
+  }
+  finally {
     await mysql.close();
     await sqlite.close();
   }

@@ -6,7 +6,7 @@ import { BridgeFilmActor } from "../sqlite/entity/bridges/BridgeFilmActor";
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
 import { DimActor } from "../sqlite/entity/dimensions/DimActor";
 
-export async function syncFilmActors() {
+export async function syncFilmActorsFull() {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -46,6 +46,22 @@ export async function syncFilmActors() {
 
     console.log(`SQLite: inserted ${bridgeFilmActors.length} bridge_film_actor rows`);
   } finally {
+    await mysql.close();
+    await sqlite.close();
+  }
+}
+
+export async function syncFilmActorsIncremental() {
+  const mysql = new MysqlService();
+  const sqlite = new SqliteService();
+
+  await mysql.connect();
+  await sqlite.connect();
+
+  try{
+    // Implement incremental sync logic here
+  }
+  finally {
     await mysql.close();
     await sqlite.close();
   }
