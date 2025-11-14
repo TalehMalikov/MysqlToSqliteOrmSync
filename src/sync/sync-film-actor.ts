@@ -32,11 +32,10 @@ export async function syncFilmActors() {
     await sqliteRepo.clear();
 
     const bridgeFilmActors: Partial<BridgeFilmActor>[] = filmActors
-    .filter((fa) => filmKeyMap.has(fa.filmId) && actorKeyMap.has(fa.actorId))  // ✅ Only keep if both keys exist
+    .filter((fa) => filmKeyMap.has(fa.filmId) && actorKeyMap.has(fa.actorId))
     .map((fa) => ({
         filmKey: filmKeyMap.get(fa.filmId)!,
-        actorKey: actorKeyMap.get(fa.actorId)!,
-        lastUpdate: fa.lastUpdate,
+        actorKey: actorKeyMap.get(fa.actorId)!
     }));
 
     const BATCH_SIZE = 500;

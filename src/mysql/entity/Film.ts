@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, JoinColumn, ManyToOne, OneToMan
 import { Language } from "./Language"
 import { FilmActor } from "./FilmActor"
 import { Inventory } from "./Inventory"
+import { FilmCategory } from "./FilmCategory"
 
 @Entity({ name: "film" })
 export class Film {
@@ -64,6 +65,9 @@ export class Film {
     
     @OneToMany(() => FilmActor, filmActor => filmActor.film)
     filmActors: FilmActor[];
+
+    @OneToMany(() => FilmCategory, filmCategory => filmCategory.film)
+    filmCategories: FilmCategory[];
 
     @OneToMany(() => Inventory, inventory => inventory.film)
     inventories: Inventory[];
