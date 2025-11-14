@@ -57,7 +57,6 @@ export async function syncPayments() {
     for (let i = 0; i < factPayments.length; i += BATCH_SIZE) {
       const batch = factPayments.slice(i, i + BATCH_SIZE);
       await sqliteRepo.save(batch);
-      console.log(`Inserted batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(factPayments.length / BATCH_SIZE)}`);
     }
 
     console.log(`SQLite: inserted ${factPayments.length} fact_payment rows`);

@@ -11,21 +11,21 @@ export class FactRental {
     @Column({ name: "date_key_rented" })
     dateKeyRented: number;
 
-    @Column({ name: "date_key_returned" })
-    dateKeyReturned: number;
+    @Column({ name: "date_key_returned", nullable: true })
+    dateKeyReturned: number | null;
 
-    @Column({ name: "film_key" })
-    filmKey: number;
+    @Column({ name: "film_key", nullable: true })
+    filmKey: number | null;
 
-    @Column({ name: "store_key" })
-    storeKey: number;
+    @Column({ name: "store_key", nullable: true })
+    storeKey: number | null;
 
-    @Column({  name: "customer_key" })
-    customerKey: number;
+    @Column({  name: "customer_key", nullable: true })
+    customerKey: number | null;
 
     @Column({ name: "staff_id" })
     staffId: number;
 
-    @Column({ name: "rental_duration_days" })
-    rentalDurationDays: number;
+    @Column({ name: "rental_duration_days", type: "int", nullable: true })
+    rentalDurationDays: number | null;
 }
