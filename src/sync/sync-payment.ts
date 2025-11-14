@@ -6,7 +6,7 @@ import { FactPayment } from "../sqlite/entity/facts/FactPayment";
 import { DimCustomer } from "../sqlite/entity/dimensions/DimCustomer";
 import { DimStore } from "../sqlite/entity/dimensions/DimStore";
 import { ValidationResult } from "../types/validation";
-import { updateLastSync } from "../utils/sync-state";
+import { getLastSync, updateLastSync } from "../utils/sync-state";
 
 function generateDateKey(timestamp: Date | string): number {
   const date = new Date(timestamp);
@@ -83,7 +83,59 @@ export async function syncPaymentsIncremental() {
   await sqlite.connect();
 
   try{
-    // Implement incremental sync logic here
+    const mysqlRepo = mysql.getRepo(Payment);
+    const sqliteRepo = sqlite.getRepo(FactPayment);
+
+    const dimCustomerRepo = sqlite.getRepo(DimCustomer);
+    const dimStoreRepo = sqlite.getRepo(DimStore);
+
+    const lastSync = await getLastSync("fact_payment");
+
+    const dimCustomers = await dimCustomerRepo.find();
+    const dimStores = await dimStoreRepo.find();
+
+    const customerKeyMap = new Map(
+      dimCustomers.map((c) => [c.customerId, c.customerKey])
+    );
+    const storeKeyMap = new Map(
+      dimStores.map((s) => [s.storeId, s.storeKey])
+    );
+
+    const payments = await mysqlRepo.find({ relations: ["customer"] });
+
+    const changed = payments.filter((p) => p.lastUpdate > lastSync);
+
+    if (changed.length === 0) {
+      console.log("No new or updated payments since last sync.");
+      return;
+    }
+
+    const factPayments: Partial<FactPayment>[] = changed
+      .filter(
+        (p) =>
+          customerKeyMap.has(p.customerId) &&
+          storeKeyMap.has(p.customer?.storeId)
+      )
+      .map((p) => ({
+        paymentId: p.paymentId,
+        dateKeyPaid: generateDateKey(p.paymentDate),
+        customerKey: customerKeyMap.get(p.customerId)!,
+        storeKey: storeKeyMap.get(p.customer.storeId)!,
+        staffId: p.staffId,
+        amount: p.amount,
+      }));
+
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < factPayments.length; i += BATCH_SIZE) {
+      const batch = factPayments.slice(i, i + BATCH_SIZE);
+      await sqliteRepo.save(batch);
+    }
+
+    const newestLastUpdate = changed.reduce(
+      (max, p) => (p.lastUpdate > max ? p.lastUpdate : max),
+      lastSync
+    );
+    await updateLastSync("fact_payment", newestLastUpdate);
   }
   finally {
     await mysql.close();

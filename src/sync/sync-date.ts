@@ -47,7 +47,8 @@ export async function syncDateFull() {
 
     await repo.save(rows);
     console.log(`Inserted ${rows.length} rows into dim_date`);
-  } finally {
+  } 
+  finally {
     await sqlite.close();
   }
 }

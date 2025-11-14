@@ -4,7 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Category } from "../mysql/entity/Category";
 import { DimCategory } from "../sqlite/entity/dimensions/DimCategory";
 import { ValidationResult } from "../types/validation";
-import { updateLastSync } from "../utils/sync-state";
+import { getLastSync, updateLastSync } from "../utils/sync-state";
 
 export async function syncCategoriesFull() {
   const mysql = new MysqlService();
@@ -52,7 +52,34 @@ export async function syncCategoriesIncremental() {
   await sqlite.connect();
 
   try{
-    // Implement incremental sync logic here
+    const mysqlRepo = mysql.getRepo(Category);
+    const sqliteRepo = sqlite.getRepo(DimCategory);
+
+    const lastSync = await getLastSync("dim_category");
+
+    const categories = await mysqlRepo.find();
+    console.log(`MySQL: read ${categories.length} categories (for incremental)`);
+
+    const changed = categories.filter(c => c.lastUpdate > lastSync);
+
+    if (changed.length === 0) {
+      console.log("No new or updated categories since last sync.");
+      return;
+    }
+
+    const dimCategories: Partial<DimCategory>[] = changed.map((a) => ({
+      categoryId: a.categoryId,
+      name: a.name,
+      lastUpdate: a.lastUpdate,
+    }));
+
+    await sqliteRepo.save(dimCategories);
+
+    const newestLastUpdate = changed.reduce(
+      (max, c) => (c.lastUpdate > max ? c.lastUpdate : max),
+      lastSync
+    );
+    await updateLastSync("dim_category", newestLastUpdate);
   }
   finally {
     await mysql.close();

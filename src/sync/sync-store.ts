@@ -4,7 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Store } from "../mysql/entity/Store";
 import { DimStore } from "../sqlite/entity/dimensions/DimStore";
 import { ValidationResult } from "../types/validation";
-import { updateLastSync } from "../utils/sync-state";
+import { getLastSync, updateLastSync } from "../utils/sync-state";
 
 export async function syncStoresFull() {
   const mysql = new MysqlService();
@@ -56,8 +56,37 @@ export async function syncStoresIncremental() {
   await mysql.connect();
   await sqlite.connect();
 
-  try{
-    // Implement incremental sync logic here
+  try {
+    const mysqlRepo = mysql.getRepo(Store);
+    const sqliteRepo = sqlite.getRepo(DimStore);
+    
+    const lastSync = await getLastSync("store");
+
+    const stores = await mysqlRepo.find({
+      relations: ["address", "address.city", "address.city.country"],
+    });
+
+    const changed = stores.filter(s => s.lastUpdate > lastSync);
+
+    if (changed.length === 0) {
+      console.log("No new or updated stores since last sync.");
+      return;
+    }
+
+    const dimRows = changed.map(s => ({
+      storeId: s.storeId,
+      city: s.address?.city?.city || null,
+      country: s.address?.city?.country?.country || null,
+      lastUpdate: s.lastUpdate
+    }));
+
+    await sqliteRepo.save(dimRows);
+
+    const newest = changed.reduce(
+      (max, s) => (s.lastUpdate > max ? s.lastUpdate : max),
+      lastSync
+    );
+    await updateLastSync("store", newest);
   }
   finally {
     await mysql.close();

@@ -4,7 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Actor } from "../mysql/entity/Actor";
 import { DimActor } from "../sqlite/entity/dimensions/DimActor";
 import { ValidationResult } from "../types/validation";
-import { updateLastSync } from "../utils/sync-state";
+import { getLastSync, updateLastSync } from "../utils/sync-state";
 
 export async function syncActorsFull() {
   const mysql = new MysqlService();
@@ -53,7 +53,35 @@ export async function syncActorsIncremental() {
   await sqlite.connect();
 
   try{
-    // Implement incremental sync logic here
+    const mysqlRepo = mysql.getRepo(Actor);
+    const sqliteRepo = sqlite.getRepo(DimActor);
+
+    const lastSync = await getLastSync("dim_actor");
+
+    const actors = await mysqlRepo.find();
+    console.log(`MySQL: read ${actors.length} actors (for incremental)`);
+
+    const changed = actors.filter(a => a.lastUpdate > lastSync);
+
+    if (changed.length === 0) {
+      console.log("No new or updated actors since last sync.");
+      return;
+    }
+
+    const dimActors: Partial<DimActor>[] = changed.map(a => ({
+      actorId: a.actorId,
+      firstName: a.firstName,
+      lastName: a.lastName,
+      lastUpdate: a.lastUpdate,
+    }));
+
+    await sqliteRepo.save(dimActors);
+
+    const newestLastUpdate = changed.reduce(
+      (max, a) => (a.lastUpdate > max ? a.lastUpdate : max),
+      lastSync
+    );
+    await updateLastSync("dim_actor", newestLastUpdate);
   }
   finally {
     await mysql.close();

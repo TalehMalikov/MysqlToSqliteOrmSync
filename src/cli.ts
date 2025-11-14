@@ -1,8 +1,8 @@
 import "reflect-metadata";
-import { init } from "./init";
-import { fullLoad } from "./full-load";
-import { incremental } from "./incremental";
-import { validate } from "./validate";
+import { init } from "./commands/init";
+import { fullLoad } from "./commands/full-load";
+import { incremental } from "./commands/incremental";
+import { validate } from "./commands/validate";
 
 async function main() {
   const cmd = process.argv[2];

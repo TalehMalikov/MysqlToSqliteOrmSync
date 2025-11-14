@@ -4,7 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Customer } from "../mysql/entity/Customer";
 import { DimCustomer } from "../sqlite/entity/dimensions/DimCustomer";
 import { ValidationResult } from "../types/validation";
-import { updateLastSync } from "../utils/sync-state";
+import { getLastSync, updateLastSync } from "../utils/sync-state";
 
 export async function syncCustomersFull() {
   const mysql = new MysqlService();
@@ -57,7 +57,39 @@ export async function syncCustomersIncremental() {
   await sqlite.connect();
 
   try{
-    // Implement incremental sync logic here
+    const mysqlRepo = mysql.getRepo(Customer);
+    const sqliteRepo = sqlite.getRepo(DimCustomer);
+
+    const lastSync = await getLastSync("dim_customer");
+
+    const customers = await mysqlRepo.find({
+      relations: ["address", "address.city", "address.city.country"],
+    });
+
+    const changed = customers.filter(c => c.lastUpdate > lastSync);
+
+    if (changed.length === 0) {
+      console.log("No new or updated customers since last sync.");
+      return;
+    }
+
+    const dimCustomers: Partial<DimCustomer>[] = changed.map(a => ({
+      customerId: a.customerId,
+      firstName: a.firstName,
+      lastName: a.lastName,
+      active: a.active,
+      city: a.address.city.city,
+      country: a.address.city.country.country,
+      lastUpdate: a.lastUpdate,
+    }));
+
+    await sqliteRepo.save(dimCustomers);
+
+    const newestLastUpdate = changed.reduce(
+      (max, c) => (c.lastUpdate > max ? c.lastUpdate : max),
+      lastSync
+    );
+    await updateLastSync("dim_customer", newestLastUpdate);
   }
   finally {
     await mysql.close();

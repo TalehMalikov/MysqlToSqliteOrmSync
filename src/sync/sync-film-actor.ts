@@ -6,7 +6,7 @@ import { BridgeFilmActor } from "../sqlite/entity/bridges/BridgeFilmActor";
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
 import { DimActor } from "../sqlite/entity/dimensions/DimActor";
 import { ValidationResult } from "../types/validation";
-import { updateLastSync } from "../utils/sync-state";
+import { getLastSync, updateLastSync } from "../utils/sync-state";
 
 export async function syncFilmActorsFull() {
   const mysql = new MysqlService();
@@ -68,7 +68,47 @@ export async function syncFilmActorsIncremental() {
   await sqlite.connect();
 
   try{
-    // Implement incremental sync logic here
+    const mysqlRepo = mysql.getRepo(FilmActor);
+    const sqliteRepo = sqlite.getRepo(BridgeFilmActor);
+
+    const dimFilmRepo = sqlite.getRepo(DimFilm);
+    const dimActorRepo = sqlite.getRepo(DimActor);
+
+    const lastSync = await getLastSync("bridge_film_actor");
+
+    const dimFilms = await dimFilmRepo.find();
+    const dimActors = await dimActorRepo.find();
+
+    const filmKeyMap = new Map(dimFilms.map(f => [f.filmId, f.filmKey]));
+    const actorKeyMap = new Map(dimActors.map(a => [a.actorId, a.actorKey]));
+
+    const filmActors = await mysqlRepo.find();
+
+    const changed = filmActors.filter(fa => fa.lastUpdate > lastSync);
+
+    if (changed.length === 0) {
+      console.log("No new or updated film-actor relationships since last sync.");
+      return;
+    }
+
+    const bridgeFilmActors: Partial<BridgeFilmActor>[] = changed
+      .filter(fa => filmKeyMap.has(fa.filmId) && actorKeyMap.has(fa.actorId))
+      .map(fa => ({
+        filmKey: filmKeyMap.get(fa.filmId)!,
+        actorKey: actorKeyMap.get(fa.actorId)!,
+      }));
+
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < bridgeFilmActors.length; i += BATCH_SIZE) {
+      const batch = bridgeFilmActors.slice(i, i + BATCH_SIZE);
+      await sqliteRepo.save(batch);
+    }
+
+    const newestLastUpdate = changed.reduce(
+      (max, fa) => (fa.lastUpdate > max ? fa.lastUpdate : max),
+      lastSync
+    );
+    await updateLastSync("bridge_film_actor", newestLastUpdate);
   }
   finally {
     await mysql.close();

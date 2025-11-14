@@ -4,7 +4,7 @@ import { SqliteService } from "../sqlite/sqlite.service";
 import { Film } from "../mysql/entity/Film";
 import { DimFilm } from "../sqlite/entity/dimensions/DimFilm";
 import { ValidationResult } from "../types/validation";
-import { updateLastSync } from "../utils/sync-state";
+import { getLastSync, updateLastSync } from "../utils/sync-state";
 
 export async function syncFilmsFull() {
   const mysql = new MysqlService();
@@ -59,7 +59,39 @@ export async function syncFilmsIncremental() {
   await sqlite.connect();
 
   try{
-    // Implement incremental sync logic here
+    const mysqlRepo = mysql.getRepo(Film);
+    const sqliteRepo = sqlite.getRepo(DimFilm);
+
+    const lastSync = await getLastSync("dim_film");
+
+    const films = await mysqlRepo.find({
+      relations: ["language"],
+    });
+
+    const changed = films.filter(f => f.lastUpdate > lastSync);
+
+    if (changed.length === 0) {
+      console.log("No new or updated films since last sync.");
+      return;
+    }
+
+    const dimFilms: Partial<DimFilm>[] = changed.map((a) => ({
+      filmId: a.filmId,
+      title: a.title,
+      rating: a.rating,
+      length: a.length,
+      language: a.language.name,
+      releaseYear: a.releaseYear,
+      lastUpdate: a.lastUpdate,
+    }));
+
+    await sqliteRepo.save(dimFilms);
+
+    const newestLastUpdate = changed.reduce(
+      (max, f) => (f.lastUpdate > max ? f.lastUpdate : max),
+      lastSync
+    );
+    await updateLastSync("dim_film", newestLastUpdate);
   }
   finally {
     await mysql.close();
