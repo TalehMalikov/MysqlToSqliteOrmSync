@@ -4,6 +4,7 @@ import { syncCategories } from "./sync/sync-category";
 import { syncCustomers } from "./sync/sync-customer";
 import { syncFilms } from "./sync/sync-film";
 import { syncStores } from "./sync/sync-store";
+import { syncFilmActors } from "./sync/sync-film-actor";
 
 async function main() {
   console.log("=== Start DW sync ===");
@@ -13,6 +14,7 @@ async function main() {
   await syncCustomers();
   await syncFilms();
   await syncStores();
+  await syncFilmActors();
 
   console.log("=== DW sync finished ===");
 }
