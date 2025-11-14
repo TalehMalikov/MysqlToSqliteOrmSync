@@ -8,7 +8,8 @@ export const MySQLDataSource = new DataSource({
     username: "root",
     password: "Mtt29062003!@#$",
     database: "sakila",
-    synchronize: true,
+    synchronize: false,
+    migrationsRun: false,
     logging: true,
     entities: [__dirname + "/entity/*.{ts,js}"],
 })

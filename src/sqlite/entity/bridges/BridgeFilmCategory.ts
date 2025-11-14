@@ -1,10 +1,10 @@
-import { Entity, Column } from "typeorm"
+import { Entity, Column, PrimaryColumn } from "typeorm"
 
 @Entity({ name: "bridge_film_category" })
 export class BridgeFilmCategory {
-    @Column({ name: "film_key" })
+    @PrimaryColumn({ name: "film_key" })
     filmKey: number;
 
-    @Column({ name: "category_key" })
+    @PrimaryColumn({ name: "category_key" })
     categoryKey: number;
 }
