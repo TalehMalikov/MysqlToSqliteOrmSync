@@ -6,7 +6,7 @@ import { syncFilms } from "./sync/sync-film";
 import { syncStores } from "./sync/sync-store";
 import { syncFilmActors } from "./sync/sync-film-actor";
 import { syncFilmCategories } from "./sync/sync-film-category";
-import { syncPayments } from "./sync/sync_payment";
+import { syncPayments } from "./sync/sync-payment";
 import { syncRentals } from "./sync/sync-rental";
 import { syncDate } from "./sync/sync-date";
 
