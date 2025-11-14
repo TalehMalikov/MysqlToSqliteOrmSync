@@ -5,9 +5,13 @@ export class Country {
     @PrimaryGeneratedColumn({ name: "country_id" })
     countryId: number;
 
-    @Column({nullable: false })
+    @Column({nullable: false, length: 50 })
     country: string;
 
-    @Column({ name: "last_update", nullable: false, type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    @Column({ 
+        name: "last_update", 
+        nullable: false, 
+        type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' 
+    })
     lastUpdate: Date;
 }

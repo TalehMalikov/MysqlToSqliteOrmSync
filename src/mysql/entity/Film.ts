@@ -8,7 +8,7 @@ export class Film {
     @PrimaryGeneratedColumn({ name: "film_id" })
     filmId: number
 
-    @Column({ nullable: false })
+    @Column({ nullable: false, length: 128 })
     title: string
 
     @Column({ nullable: true })
@@ -41,7 +41,11 @@ export class Film {
     @Column({ name: "special_features", type: 'set', nullable: true })
     specialFeatures: string
 
-    @Column({ name: "last_update", type: 'timestamp', nullable: false, default: () => 'CURRENT_TIMESTAMP' })
+    @Column({ 
+        name: "last_update", 
+        type: 'timestamp', 
+        nullable: false, default: () => 'CURRENT_TIMESTAMP' 
+    })
     lastUpdate: Date
 
     @Column({ name: "last_rented" , type: "datetime", nullable: true })

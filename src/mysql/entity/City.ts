@@ -6,13 +6,17 @@ export class City {
     @PrimaryGeneratedColumn({ name: "city_id" })
     cityId: number;
 
-    @Column({nullable: false })
+    @Column({nullable: false, length: 50 })
     city: string;
 
     @Column({ name: "country_id", nullable: true })
     countryId: number;
 
-    @Column({ name: "last_update", nullable: false, type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    @Column({ 
+        name: "last_update", 
+        nullable: false, 
+        type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' 
+    })
     lastUpdate: Date;
 
     @ManyToOne(() => Country)

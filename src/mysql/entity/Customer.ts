@@ -7,13 +7,13 @@ export class Customer {
     @PrimaryGeneratedColumn({ name: "customer_id" })
     customerId: number;
 
-    @Column({ name: "first_name", nullable: false })
+    @Column({ name: "first_name", nullable: false, length: 45 })
     firstName: string;
 
-    @Column({ name: "last_name", nullable: false })
+    @Column({ name: "last_name", nullable: false, length: 45 })
     lastName: string;
 
-    @Column({ name: "email", nullable: true })
+    @Column({ name: "email", nullable: true, length: 50 })
     email: string;
 
     @Column({ name: "address_id", nullable: false })
@@ -28,7 +28,11 @@ export class Customer {
     @Column({ name: "create_date", type: "datetime", nullable: false })
     createDate: Date;
 
-    @Column({ name: "last_update", nullable: false, type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+    @Column({ 
+        name: "last_update", 
+        nullable: false, 
+        type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' 
+    })
     lastUpdate: Date;
 
     @ManyToOne(() => Address)
