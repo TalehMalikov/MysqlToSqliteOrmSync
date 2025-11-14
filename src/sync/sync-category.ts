@@ -15,12 +15,12 @@ export async function syncCategories() {
     const mysqlRepo = mysql.getRepo(Category);
     const sqliteRepo = sqlite.getRepo(DimCategory);
 
-    const actors = await mysqlRepo.find();
-    console.log(`MySQL: read ${actors.length} actors`);
+    const categories = await mysqlRepo.find();
+    console.log(`MySQL: read ${categories.length} categories`);
 
     await sqliteRepo.clear();
 
-    const dimCategories: Partial<DimCategory>[] = actors.map((a) => ({
+    const dimCategories: Partial<DimCategory>[] = categories.map((a) => ({
       categoryKey: 50000 + a.categoryId,
       categoryId: a.categoryId,
       name: a.name,

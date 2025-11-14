@@ -15,14 +15,14 @@ export async function syncCustomers() {
     const mysqlRepo = mysql.getRepo(Customer);
     const sqliteRepo = sqlite.getRepo(DimCustomer);
 
-    const actors = await mysqlRepo.find({
+    const customers = await mysqlRepo.find({
         relations: ['address', 'address.city', 'address.city.country']
     });
-    console.log(`MySQL: read ${actors.length} actors`);
+    console.log(`MySQL: read ${customers.length} customers`);
 
     await sqliteRepo.clear();
 
-    const dimCustomers: Partial<DimCustomer>[] = actors.map((a) => ({
+    const dimCustomers: Partial<DimCustomer>[] = customers.map((a) => ({
       customerkey: 50000 + a.customerId,
       customerId: a.customerId,
       firstName: a.firstName,
