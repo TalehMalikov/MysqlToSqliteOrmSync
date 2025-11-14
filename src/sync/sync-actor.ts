@@ -15,14 +15,11 @@ export async function syncActors() {
     const mysqlRepo = mysql.getRepo(Actor);
     const sqliteRepo = sqlite.getRepo(DimActor);
 
-    // 1. Read all actors from MySQL
     const actors = await mysqlRepo.find();
     console.log(`MySQL: read ${actors.length} actors`);
 
-    // 2. Clear dim_actor in SQLite (full reload)
     await sqliteRepo.clear();
 
-    // 3. Transform + insert into DW
     const dimActors: Partial<DimActor>[] = actors.map((a) => ({
       actorId: a.actorId,
       firstName: a.firstName,

@@ -1,11 +1,13 @@
 import "reflect-metadata";
 import { syncActors } from "./sync/sync-actor";
+import { syncCategories } from "./sync/sync-category";
+
 
 async function main() {
   console.log("=== Start DW sync ===");
 
   await syncActors();   // add more sync functions later
-  // await syncFilms();
+  await syncCategories();
   // await syncCustomers();
   // ...
 
