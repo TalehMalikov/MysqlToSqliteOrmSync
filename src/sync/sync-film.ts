@@ -24,7 +24,6 @@ export async function syncFilms() {
     await sqliteRepo.clear();
 
     const dimFilms: Partial<DimFilm>[] = films.map((a) => ({
-      filmKey: 50000 + a.filmId,
       filmId: a.filmId,
       title: a.title,
       rating: a.rating,

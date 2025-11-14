@@ -8,6 +8,7 @@ import { syncFilmActors } from "./sync/sync-film-actor";
 import { syncFilmCategories } from "./sync/sync-film-category";
 import { syncPayments } from "./sync/sync_payment";
 import { syncRentals } from "./sync/sync-rental";
+import { syncDate } from "./sync/sync-date";
 
 async function main() {
   console.log("=== Start DW sync ===");
@@ -21,6 +22,7 @@ async function main() {
   await syncFilmCategories();
   await syncPayments();
   await syncRentals();
+  await syncDate();
 
   console.log("=== DW sync finished ===");
 }

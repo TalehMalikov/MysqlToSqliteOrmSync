@@ -25,7 +25,6 @@ export async function syncStores() {
 
     const dimStores: Partial<DimStore>[] = films
     .map((a) => ({
-      storeKey: 50000 + a.storeId,
       storeId: a.storeId,
       city: a.address?.city?.city || null,
       country: a.address?.city?.country?.country || null,

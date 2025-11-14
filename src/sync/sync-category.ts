@@ -21,7 +21,6 @@ export async function syncCategories() {
     await sqliteRepo.clear();
 
     const dimCategories: Partial<DimCategory>[] = categories.map((a) => ({
-      categoryKey: 50000 + a.categoryId,
       categoryId: a.categoryId,
       name: a.name,
       lastUpdate: a.lastUpdate,

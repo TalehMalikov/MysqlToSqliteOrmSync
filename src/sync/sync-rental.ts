@@ -71,7 +71,6 @@ export async function syncRentals() {
     for (let i = 0; i < factRentals.length; i += BATCH_SIZE) {
       const batch = factRentals.slice(i, i + BATCH_SIZE);
       await sqliteRepo.save(batch);
-      console.log(`Inserted batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(factRentals.length / BATCH_SIZE)}`);
     }
 
     console.log(`SQLite: inserted ${factRentals.length} fact_rental rows`);
