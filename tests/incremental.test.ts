@@ -45,7 +45,7 @@ describe("INCREMENTAL SYNC", () => {
     { name: "rentals",         mysqlEntity: Rental,       sqliteEntity: FactRental },
   ];
 
-    const getCounts = async () => {
+  const getCounts = async () => {
     const mysql = new MysqlService();
     const sqlite = new SqliteService();
 
@@ -72,19 +72,11 @@ describe("INCREMENTAL SYNC", () => {
     return counts;
   };
 
-  beforeAll(async () => {
-    const originalLog = console.log;
-    console.log = jest.fn(); // silence logs
-    try {
-      await fullLoad();
-    } finally {
-      console.log = originalLog;
-    }
-  });
-
   it("keeps MySQL and SQLite deltas in sync during incremental", async () => {
+    // Get counts BEFORE incremental (MySQL has new data you added manually)
     const before = await getCounts();
 
+    // Run incremental sync
     const originalLog = console.log;
     console.log = jest.fn();
     try {
@@ -93,27 +85,21 @@ describe("INCREMENTAL SYNC", () => {
       console.log = originalLog;
     }
 
+    // Get counts AFTER incremental (should now be equal)
     const after = await getCounts();
 
-    const summary = tablePairs.map(({ name }) => {
-      const deltaMysql = after[name].mysql - before[name].mysql;
-      const deltaSqlite = after[name].sqlite - before[name].sqlite;
+    const summary = tablePairs.map(({ name }) => ({
+      table: name,
+      mysql_before: before[name].mysql,
+      sqlite_before: before[name].sqlite,
+      mysql_after: after[name].mysql,
+      sqlite_after: after[name].sqlite,
+      status: after[name].mysql === after[name].sqlite ? "✓ SUCCESS" : "✗ FAILED"
+    }));
 
-      return {
-        table: name,
-        before_mysql: before[name].mysql,
-        before_sqlite: before[name].sqlite,
-        after_mysql: after[name].mysql,
-        after_sqlite: after[name].sqlite,
-        delta_mysql: deltaMysql,
-        delta_sqlite: deltaSqlite,
-        equal: deltaMysql === deltaSqlite,
-      };
-    });
-
-    console.log("\n=== INCREMENTAL SUMMARY ===");
+    console.log("\n=== INCREMENTAL SYNC SUMMARY ===");
     console.table(summary);
 
-    expect(summary.every(row => row.equal)).toBe(true);
+    expect(summary.every(row => row.status === "✓ SUCCESS")).toBe(true);
   });
 });
