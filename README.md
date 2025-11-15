@@ -178,16 +178,6 @@ Prints:
 
 ## 5. Running Tests
 
-### Run all tests:
-```bash
-npm test
-```
-
-### Run a single test:
-```bash
-npx jest tests/full-load.test.ts
-```
-
 Available test files:
 
 * **[full-load.test.ts](tests/full-load.test.ts)** — verifies **full sync** matches MySQL row counts
