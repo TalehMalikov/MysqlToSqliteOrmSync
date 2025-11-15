@@ -58,7 +58,6 @@ export async function syncCategoriesIncremental() {
     const lastSync = await getLastSync("dim_category");
 
     const categories = await mysqlRepo.find();
-    console.log(`MySQL: read ${categories.length} categories (for incremental)`);
 
     const changed = categories.filter(c => c.lastUpdate > lastSync);
 
@@ -67,11 +66,17 @@ export async function syncCategoriesIncremental() {
       return;
     }
 
-    const dimCategories: Partial<DimCategory>[] = changed.map((a) => ({
+    const existingDim = await sqliteRepo.find();
+    const keyByCategoryId = new Map<number, number>(
+      existingDim.map(d => [d.categoryId, d.categoryKey])
+    );
+
+    const dimCategories: Partial<DimCategory>[] = changed.map(a => ({
+      categoryKey: keyByCategoryId.get(a.categoryId),
       categoryId: a.categoryId,
       name: a.name,
       lastUpdate: a.lastUpdate,
-    }));
+    }));    
 
     await sqliteRepo.save(dimCategories);
 
@@ -80,6 +85,8 @@ export async function syncCategoriesIncremental() {
       lastSync
     );
     await updateLastSync("dim_category", newestLastUpdate);
+
+    console.log(`${changed.length} categories changed since last sync. Added/updated in dim_category.`);
   }
   finally {
     await mysql.close();

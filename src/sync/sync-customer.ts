@@ -90,6 +90,8 @@ export async function syncCustomersIncremental() {
       lastSync
     );
     await updateLastSync("dim_customer", newestLastUpdate);
+
+    console.log(`${changed.length} customers changed since last sync. Added/updated in dim_customer.`);
   }
   finally {
     await mysql.close();

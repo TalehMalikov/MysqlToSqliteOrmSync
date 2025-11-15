@@ -59,7 +59,6 @@ export async function syncActorsIncremental() {
     const lastSync = await getLastSync("dim_actor");
 
     const actors = await mysqlRepo.find();
-    console.log(`MySQL: read ${actors.length} actors (for incremental)`);
 
     const changed = actors.filter(a => a.lastUpdate > lastSync);
 
@@ -68,7 +67,13 @@ export async function syncActorsIncremental() {
       return;
     }
 
+    const existingDim = await sqliteRepo.find();
+    const keyByActorId = new Map<number, number>(
+      existingDim.map(d => [d.actorId, d.actorKey])
+    );
+
     const dimActors: Partial<DimActor>[] = changed.map(a => ({
+      actorKey: keyByActorId.get(a.actorId),
       actorId: a.actorId,
       firstName: a.firstName,
       lastName: a.lastName,
@@ -82,6 +87,8 @@ export async function syncActorsIncremental() {
       lastSync
     );
     await updateLastSync("dim_actor", newestLastUpdate);
+
+    console.log(`${changed.length} actors changed since last sync. Added/updated in dim_actor.`);
   }
   finally {
     await mysql.close();

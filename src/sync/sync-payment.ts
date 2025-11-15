@@ -135,6 +135,8 @@ export async function syncPaymentsIncremental() {
       lastSync
     );
     await updateLastSync("fact_payment", newestLastUpdate);
+
+    console.log(`${changed.length} payments changed since last sync. Added/updated in fact_payment.`);
   }
   finally {
     await mysql.close();

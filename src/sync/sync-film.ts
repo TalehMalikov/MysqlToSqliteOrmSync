@@ -92,6 +92,8 @@ export async function syncFilmsIncremental() {
       lastSync
     );
     await updateLastSync("dim_film", newestLastUpdate);
+
+    console.log(`${changed.length} films changed since last sync. Added/updated in dim_film.`);
   }
   finally {
     await mysql.close();

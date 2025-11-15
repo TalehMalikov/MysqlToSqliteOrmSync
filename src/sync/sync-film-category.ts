@@ -109,6 +109,8 @@ export async function syncFilmCategoriesIncremental() {
       lastSync
     );
     await updateLastSync("bridge_film_category", newestLastUpdate);
+
+    console.log(`${changed.length} film-category relationships changed since last sync. Added/updated in bridge_film_category.`);
   }
   finally {
     await mysql.close();

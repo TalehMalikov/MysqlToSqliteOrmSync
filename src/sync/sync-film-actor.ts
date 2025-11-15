@@ -109,6 +109,8 @@ export async function syncFilmActorsIncremental() {
       lastSync
     );
     await updateLastSync("bridge_film_actor", newestLastUpdate);
+
+    console.log(`${changed.length} film-actor relationships changed since last sync. Added/updated in bridge_film_actor.`);
   }
   finally {
     await mysql.close();

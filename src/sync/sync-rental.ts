@@ -157,6 +157,8 @@ export async function syncRentalsIncremental() {
       lastSync
     );
     await updateLastSync("fact_rental", newestLastUpdate);
+
+    console.log(`${changed.length} rentals changed since last sync. Added/updated in fact_rental.`);
   }
   finally {
     await mysql.close();

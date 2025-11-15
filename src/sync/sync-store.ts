@@ -60,7 +60,7 @@ export async function syncStoresIncremental() {
     const mysqlRepo = mysql.getRepo(Store);
     const sqliteRepo = sqlite.getRepo(DimStore);
     
-    const lastSync = await getLastSync("store");
+    const lastSync = await getLastSync("dim_store");
 
     const stores = await mysqlRepo.find({
       relations: ["address", "address.city", "address.city.country"],
@@ -86,7 +86,9 @@ export async function syncStoresIncremental() {
       (max, s) => (s.lastUpdate > max ? s.lastUpdate : max),
       lastSync
     );
-    await updateLastSync("store", newest);
+    await updateLastSync("dim_store", newest);
+
+    console.log(`${changed.length} stores changed since last sync. Added/updated in dim_store.`);
   }
   finally {
     await mysql.close();
