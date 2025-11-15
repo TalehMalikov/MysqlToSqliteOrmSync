@@ -1,6 +1,6 @@
 # MysqlToSqliteOrmSync
 
-## 1. 📌 Project Overview & Purpose
+## 1. Project Overview & Purpose
 
 **MysqlToSqliteOrmSync** is a TypeScript ETL pipeline that:
 
@@ -26,7 +26,7 @@ Ideal for:
 
 ---
 
-## 2. 📁 Project Structure
+## 2. Project Structure
 
 ```
 src/
@@ -87,7 +87,7 @@ tests/
 
 ---
 
-## 3. 📦 Technologies & Libraries
+## 3. Technologies & Libraries
 
 ### **Language**
 
@@ -117,7 +117,7 @@ tests/
 
 ---
 
-## 4. 🚀 CLI Command Instructions
+## 4. CLI Command Instructions
 
 All CLI interaction uses:
 
@@ -173,7 +173,7 @@ Prints:
 
 ---
 
-## 5. 🧪 Running Tests
+## 5. Running Tests
 
 ### Run all tests:
 
