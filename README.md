@@ -116,7 +116,6 @@ tests/
 * reflect-metadata
 * dotenv (optional for env vars)
 
----
 
 ## 4. CLI Command Instructions
 
