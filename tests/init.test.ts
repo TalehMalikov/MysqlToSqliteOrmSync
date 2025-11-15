@@ -8,12 +8,10 @@ describe("INIT SQLite DB", () => {
   it("initializes SQLite schema successfully", async () => {
     const originalExitCode = process.exitCode;
 
-    // --- spy on important methods ---
     const connectSpy = jest.spyOn(SqliteService.prototype, "connect");
     const closeSpy = jest.spyOn(SqliteService.prototype, "close");
     const syncSpy = jest.spyOn(SQLiteDataSource, "synchronize");
 
-    // --- capture logs ---
     const capturedLogs: string[] = [];
     const capturedErrors: string[] = [];
 
@@ -26,16 +24,13 @@ describe("INIT SQLite DB", () => {
     });
 
     try {
-      // run init()
       await init();
     } finally {
-      // restore console first
       logSpy.mockRestore();
       errorSpy.mockRestore();
       process.exitCode = originalExitCode;
     }
 
-    // --- build summary ---
     const summary = [
       {
         step: "connect() called",
@@ -55,11 +50,9 @@ describe("INIT SQLite DB", () => {
       },
     ];
 
-    // --- print summary table ---
     console.log("\n=== INIT SUMMARY ===");
     console.table(summary);
 
-    // --- assertions ---
     expect(summary.every((r) => r.ok)).toBe(true);
   });
 });

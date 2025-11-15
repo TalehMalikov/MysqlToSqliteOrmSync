@@ -45,8 +45,7 @@ describe("INCREMENTAL SYNC", () => {
     { name: "rentals",         mysqlEntity: Rental,       sqliteEntity: FactRental },
   ];
 
-  // helper to get counts with fresh connections
-  const getCounts = async () => {
+    const getCounts = async () => {
     const mysql = new MysqlService();
     const sqlite = new SqliteService();
 
@@ -74,7 +73,6 @@ describe("INCREMENTAL SYNC", () => {
   };
 
   beforeAll(async () => {
-    // Run full load once to establish baseline
     const originalLog = console.log;
     console.log = jest.fn(); // silence logs
     try {
@@ -85,10 +83,8 @@ describe("INCREMENTAL SYNC", () => {
   });
 
   it("keeps MySQL and SQLite deltas in sync during incremental", async () => {
-    // 1) counts BEFORE incremental
     const before = await getCounts();
 
-    // 2) run incremental silently
     const originalLog = console.log;
     console.log = jest.fn();
     try {
@@ -97,10 +93,8 @@ describe("INCREMENTAL SYNC", () => {
       console.log = originalLog;
     }
 
-    // 3) counts AFTER incremental
     const after = await getCounts();
 
-    // 4) build and print summary
     const summary = tablePairs.map(({ name }) => {
       const deltaMysql = after[name].mysql - before[name].mysql;
       const deltaSqlite = after[name].sqlite - before[name].sqlite;
@@ -120,7 +114,6 @@ describe("INCREMENTAL SYNC", () => {
     console.log("\n=== INCREMENTAL SUMMARY ===");
     console.table(summary);
 
-    // 5) assert all deltas match
     expect(summary.every(row => row.equal)).toBe(true);
   });
 });
