@@ -11,10 +11,10 @@ export class FactPayment {
     @Column({ name: "date_key_paid" })
     dateKeyPaid: number;
 
-    @Column({  name: "customer_key" })
-    customerKey: number;
+    @Column({  name: "customer_key", nullable: true })
+    customerKey: number | null;
 
-    @Column({ name: "store_key" })
+    @Column({ name: "store_key", nullable: true })
     storeKey: number;
 
     @Column({ name: "staff_id" })
@@ -22,4 +22,7 @@ export class FactPayment {
 
     @Column("double")
     amount: number;
+
+    @Column({ name: "last_update", nullable: false})
+    lastUpdate: Date;
 }

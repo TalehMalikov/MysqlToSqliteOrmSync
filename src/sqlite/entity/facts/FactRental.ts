@@ -28,4 +28,7 @@ export class FactRental {
 
     @Column({ name: "rental_duration_days", type: "int", nullable: true })
     rentalDurationDays: number | null;
+
+    @Column({ name: "last_update", nullable: false})
+    lastUpdate: Date;
 }

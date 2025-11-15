@@ -64,10 +64,9 @@ export async function syncRentalsFull() {
         rentalDurationDays: r.returnDate
           ? Math.ceil((r.returnDate.getTime() - r.rentalDate.getTime()) / (1000 * 60 * 60 * 24))
           : null,
+        lastUpdate: r.lastUpdate
       };
     });
-
-    console.log(`Processing ${factRentals.length} rentals (including those with null foreign keys)`);
 
     const BATCH_SIZE = 500;
     for (let i = 0; i < factRentals.length; i += BATCH_SIZE) {
@@ -128,7 +127,7 @@ export async function syncRentalsIncremental() {
     const factRentals: Partial<FactRental>[] = changed.map((r) => {
       const filmId = r.inventory?.film?.filmId;
       const storeId = r.customer?.storeId;
-
+      console.log('Rental Last Update:', r.lastUpdate);
       return {
         rentalId: r.rentalId,
         dateKeyRented: generateDateKey(r.rentalDate),
@@ -143,6 +142,7 @@ export async function syncRentalsIncremental() {
                 (1000 * 60 * 60 * 24)
             )
           : null,
+        lastUpdate: r.lastUpdate
       };
     });
 
@@ -164,7 +164,7 @@ export async function syncRentalsIncremental() {
   }
 }
 
-export async function validateRentals() : Promise<ValidationResult> {
+export async function validateRentals(days: number) : Promise<ValidationResult> {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -172,37 +172,36 @@ export async function validateRentals() : Promise<ValidationResult> {
   await sqlite.connect();
 
   try {
-    console.log("=== Rental validation started ===");
-
-    const now = new Date();
-    const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
     const mysqlRepo = mysql.getRepo(Rental);
     const mysqlRows = await mysqlRepo.find();
 
     const sqliteRepo = sqlite.getRepo(FactRental);
     const sqliteRows = await sqliteRepo.find();
 
-    const inWindow = (d: Date) => d >= from && d < now;
+    const { from, to: now } = getFromDate(days);
 
-    const mysqlFiltered = mysqlRows.filter(r => inWindow(r.lastUpdate));
-    const sqliteFiltered = sqliteRows.filter(r => inWindow(r.lastUpdate));
+    const mysqlFiltered = mysqlRows.filter((r) => {
+      const d = new Date(r.lastUpdate as any);
+      return d >= from && d < now;
+    });
+
+    const sqliteFiltered = sqliteRows.filter((r) => {
+      const d = new Date(r.lastUpdate as any);
+      return d >= from && d < now;
+    });
 
     const mysqlCount = mysqlFiltered.length;
     const sqliteCount = sqliteFiltered.length;
 
     const ok = mysqlCount === sqliteCount;
-
-    console.log("=== Rental validation completed ===");
-
+    console.log(`Rental validation: MySQL count=${mysqlCount}, SQLite count=${sqliteCount}`);
     return {
-    name: "rentals_last_30_days",
-    ok,
-    details: `MySQL: count=${mysqlCount} ` +
-             `SQLite: count=${sqliteCount}`
+      name: "rentals_last_30_days",
+      ok,
+      details: `MySQL: count=${mysqlCount} ` +
+               `SQLite: count=${sqliteCount}`
     };
   }
-
   catch (err) {
     console.error("Rental validation FAILED:", err);
     return {
@@ -211,9 +210,15 @@ export async function validateRentals() : Promise<ValidationResult> {
       details: "Validation threw an error: " + (err as any).message
     };
   }
-
   finally {
     await mysql.close();
     await sqlite.close();
   }
+}
+
+function getFromDate(days: number): { from: Date; to: Date } {
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(from.getDate() - days);
+  return { from, to };
 }

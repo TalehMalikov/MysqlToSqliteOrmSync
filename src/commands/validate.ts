@@ -9,20 +9,20 @@ import { validatePayments } from "../sync/sync-payment";
 import { validateRentals } from "../sync/sync-rental";
 import { ValidationResult } from "../types/validation";
 
-export async function validate() {
-  console.log("=== VALIDATE (last 30 days) ===");
+export async function validate(days: number) {
+  console.log(`=== VALIDATE (last ${days} days) ===`);
 
   const results: ValidationResult[] = [];
 
-  results.push(await validateActors());
-  results.push(await validateCategories());
-  results.push(await validateCustomers());
-  results.push(await validateFilms());
-  results.push(await validateStores());
-  results.push(await validateFilmActors());
-  results.push(await validateFilmCategories());
-  results.push(await validatePayments());
-  results.push(await validateRentals());
+  results.push(await validateActors(days));
+  results.push(await validateCategories(days));
+  results.push(await validateCustomers(days));
+  results.push(await validateFilms(days));
+  results.push(await validateStores(days));
+  results.push(await validateFilmActors(days));
+  results.push(await validateFilmCategories(days));
+  results.push(await validatePayments(days));
+  results.push(await validateRentals(days));
 
   let allOk = true;
 

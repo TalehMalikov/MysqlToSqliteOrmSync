@@ -10,6 +10,6 @@ export const MySQLDataSource = new DataSource({
     database: "sakila",
     synchronize: false,
     migrationsRun: false,
-    logging: true,
+    logging: false,
     entities: [__dirname + "/entity/*.{ts,js}"],
 })

@@ -13,8 +13,6 @@ export async function syncDateFull() {
   await sqlite.connect();
 
   try {
-    console.log("=== Building dim_date ===");
-
     const repo = sqlite.getRepo(DimDate);
     await repo.clear();
 
@@ -44,9 +42,7 @@ export async function syncDateFull() {
         isWeekend,
       });
     }
-
     await repo.save(rows);
-    console.log(`Inserted ${rows.length} rows into dim_date`);
   } 
   finally {
     await sqlite.close();

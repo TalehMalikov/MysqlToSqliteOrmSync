@@ -89,7 +89,7 @@ export async function syncActorsIncremental() {
   }
 }
 
-export async function validateActors() : Promise<ValidationResult> {
+export async function validateActors(days: number) : Promise<ValidationResult> {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -97,29 +97,28 @@ export async function validateActors() : Promise<ValidationResult> {
   await sqlite.connect();
 
   try {
-    console.log("=== Actor validation started ===");
-
-    const now = new Date();
-    const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
     const mysqlRepo = mysql.getRepo(Actor);
     const mysqlRows = await mysqlRepo.find();
 
     const sqliteRepo = sqlite.getRepo(DimActor);
     const sqliteRows = await sqliteRepo.find();
 
-    const inWindow = (d: Date) => d >= from && d < now;
+    const { from, to: now } = getFromDate(days);
 
-    const mysqlFiltered = mysqlRows.filter(r => inWindow(r.lastUpdate));
-    const sqliteFiltered = sqliteRows.filter(r => inWindow(r.lastUpdate));
+    const mysqlFiltered = mysqlRows.filter((r) => {
+      const d = new Date(r.lastUpdate as any);
+      return d >= from && d < now;
+    });
+
+    const sqliteFiltered = sqliteRows.filter((r) => {
+      const d = new Date(r.lastUpdate as any);
+      return d >= from && d < now;
+    });
 
     const mysqlCount = mysqlFiltered.length;
     const sqliteCount = sqliteFiltered.length;
 
     const ok = mysqlCount === sqliteCount;
-
-    console.log("=== Actor validation completed ===");
-
     return {
     name: "actors_last_30_days",
     ok,
@@ -127,7 +126,6 @@ export async function validateActors() : Promise<ValidationResult> {
              `SQLite: count=${sqliteCount}`
     };
   }
-
   catch (err) {
     console.error("Actor validation FAILED:", err);
     return {
@@ -136,9 +134,15 @@ export async function validateActors() : Promise<ValidationResult> {
       details: "Validation threw an error: " + (err as any).message
     };
   }
-
   finally {
     await mysql.close();
     await sqlite.close();
   }
+}
+
+function getFromDate(days: number): { from: Date; to: Date } {
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(from.getDate() - days);
+  return { from, to };
 }

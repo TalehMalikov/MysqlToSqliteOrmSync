@@ -116,7 +116,7 @@ export async function syncFilmCategoriesIncremental() {
   }
 }
 
-export async function validateFilmCategories() : Promise<ValidationResult> {
+export async function validateFilmCategories(days: number) : Promise<ValidationResult> {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -124,34 +124,21 @@ export async function validateFilmCategories() : Promise<ValidationResult> {
   await sqlite.connect();
 
   try {
-    console.log("=== FilmCategory validation started ===");
-
-    const now = new Date();
-    const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
     const mysqlRepo = mysql.getRepo(FilmCategory);
-    const mysqlRows = await mysqlRepo.find();
-
     const sqliteRepo = sqlite.getRepo(BridgeFilmCategory);
+    
+    const mysqlRows = await mysqlRepo.find();
     const sqliteRows = await sqliteRepo.find();
-
-    const inWindow = (d: Date) => d >= from && d < now;
-
-    const mysqlFiltered = mysqlRows.filter(r => inWindow(r.lastUpdate));
-    const sqliteFiltered = sqliteRows.filter(r => inWindow(r.lastUpdate));
-
-    const mysqlCount = mysqlFiltered.length;
-    const sqliteCount = sqliteFiltered.length;
-
+    const mysqlCount = mysqlRows.length;
+    const sqliteCount = sqliteRows.length;
+    
     const ok = mysqlCount === sqliteCount;
 
-    console.log("=== FilmCategory validation completed ===");
-
     return {
-    name: "film_categories_last_30_days",
-    ok,
-    details: `MySQL: count=${mysqlCount} ` +
-             `SQLite: count=${sqliteCount}`
+      name: "film_categories_last_30_days",
+      ok,
+      details: `MySQL: count=${mysqlCount} ` +
+               `SQLite: count=${sqliteCount}`
     };
   }
 
@@ -168,4 +155,11 @@ export async function validateFilmCategories() : Promise<ValidationResult> {
     await mysql.close();
     await sqlite.close();
   }
+}
+
+function getFromDate(days: number): { from: Date; to: Date } {
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(from.getDate() - days);
+  return { from, to };
 }

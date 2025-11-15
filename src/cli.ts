@@ -21,15 +21,12 @@ async function main() {
       break;
 
     case "validate":
-      await validate();
+      const days = parseInt(process.argv[3]) || 30;
+      await validate(days);
       break;
 
     default:
-      console.log(`
-Usage:
-  node cli.js <command>
-
-Commands:
+      console.log(`Commands:
   init         Initialize SQLite analytics database
   full-load    Full load from MySQL → SQLite
   incremental  Incremental load (new/updated rows)

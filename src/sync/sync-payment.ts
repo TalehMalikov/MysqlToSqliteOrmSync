@@ -32,7 +32,7 @@ export async function syncPaymentsFull() {
     
     const dimCustomers = await dimCustomerRepo.find();
     const dimStores = await dimStoreRepo.find();
-    
+
     const customerKeyMap = new Map(dimCustomers.map(c => [c.customerId, c.customerKey]));
     const storeKeyMap = new Map(dimStores.map(s => [s.storeId, s.storeKey]));
 
@@ -43,17 +43,15 @@ export async function syncPaymentsFull() {
     await sqliteRepo.clear();
 
     const factPayments: Partial<FactPayment>[] = payments
-      .filter((p) => customerKeyMap.has(p.customerId) && storeKeyMap.has(p.customer?.storeId))
       .map((p) => ({
         paymentId: p.paymentId,
         dateKeyPaid: generateDateKey(p.paymentDate),
         customerKey: customerKeyMap.get(p.customerId)!,
-        storeKey: storeKeyMap.get(p.customer.storeId)!,
+        storeKey: storeKeyMap.get(p.customer?.storeId)!,
         staffId: p.staffId,
         amount: p.amount,
+        lastUpdate: p.lastUpdate
       }));
-
-    console.log(`Filtered ${payments.length - factPayments.length} invalid payments`);
 
     const BATCH_SIZE = 500;
     for (let i = 0; i < factPayments.length; i += BATCH_SIZE) {
@@ -123,6 +121,7 @@ export async function syncPaymentsIncremental() {
         storeKey: storeKeyMap.get(p.customer.storeId)!,
         staffId: p.staffId,
         amount: p.amount,
+        lastUpdate: p.lastUpdate
       }));
 
     const BATCH_SIZE = 500;
@@ -143,7 +142,7 @@ export async function syncPaymentsIncremental() {
   }
 }
 
-export async function validatePayments() : Promise<ValidationResult> {
+export async function validatePayments(days: number) : Promise<ValidationResult> {
   const mysql = new MysqlService();
   const sqlite = new SqliteService();
 
@@ -151,37 +150,28 @@ export async function validatePayments() : Promise<ValidationResult> {
   await sqlite.connect();
 
   try {
-    console.log("=== Payment validation started ===");
-
-    const now = new Date();
-    const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
     const mysqlRepo = mysql.getRepo(Payment);
     const mysqlRows = await mysqlRepo.find();
 
     const sqliteRepo = sqlite.getRepo(FactPayment);
     const sqliteRows = await sqliteRepo.find();
 
-    const inWindow = (d: Date) => d >= from && d < now;
-
-    const mysqlFiltered = mysqlRows.filter(r => inWindow(r.lastUpdate));
-    const sqliteFiltered = sqliteRows.filter(r => inWindow(r.lastUpdate));
+    const { from, to: now } = getFromDate(days);
+    const mysqlFiltered = mysqlRows.filter(r => r.lastUpdate >= from && r.lastUpdate < now);
+    const sqliteFiltered = sqliteRows.filter(r => r.lastUpdate >= from && r.lastUpdate < now);
 
     const mysqlCount = mysqlFiltered.length;
     const sqliteCount = sqliteFiltered.length;
 
     const ok = mysqlCount === sqliteCount;
 
-    console.log("=== Payment validation completed ===");
-
     return {
-    name: "payments_last_30_days",
-    ok,
-    details: `MySQL: count=${mysqlCount} ` +
-             `SQLite: count=${sqliteCount}`
+      name: "payments_last_30_days",
+      ok,
+      details: `MySQL: count=${mysqlCount} ` +
+               `SQLite: count=${sqliteCount}`
     };
   }
-
   catch (err) {
     console.error("Payment validation FAILED:", err);
     return {
@@ -190,9 +180,15 @@ export async function validatePayments() : Promise<ValidationResult> {
       details: "Validation threw an error: " + (err as any).message
     };
   }
-
   finally {
     await mysql.close();
     await sqlite.close();
   }
+}
+
+function getFromDate(days: number): { from: Date; to: Date } {
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(from.getDate() - days);
+  return { from, to };
 }
