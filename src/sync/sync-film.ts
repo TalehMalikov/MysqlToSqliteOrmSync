@@ -75,7 +75,13 @@ export async function syncFilmsIncremental() {
       return;
     }
 
+    const existingDim = await sqliteRepo.find();
+    const keyByFilmId = new Map<number, number>(
+      existingDim.map(d => [d.filmId, d.filmKey])
+    );
+
     const dimFilms: Partial<DimFilm>[] = changed.map((a) => ({
+      filmKey: keyByFilmId.get(a.filmId),
       filmId: a.filmId,
       title: a.title,
       rating: a.rating,

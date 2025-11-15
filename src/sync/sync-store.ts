@@ -73,14 +73,20 @@ export async function syncStoresIncremental() {
       return;
     }
 
-    const dimRows = changed.map(s => ({
+    const existingDim = await sqliteRepo.find();
+    const keyByStoreId = new Map<number, number>(
+      existingDim.map(d => [d.storeId, d.storeKey])
+    );
+
+    const dimStores = changed.map(s => ({
+      storeKey: keyByStoreId.get(s.storeId),
       storeId: s.storeId,
       city: s.address?.city?.city || null,
       country: s.address?.city?.country?.country || null,
       lastUpdate: s.lastUpdate
-    }));
+    }));  
 
-    await sqliteRepo.save(dimRows);
+    await sqliteRepo.save(dimStores);
 
     const newest = changed.reduce(
       (max, s) => (s.lastUpdate > max ? s.lastUpdate : max),

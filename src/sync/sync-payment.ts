@@ -108,21 +108,27 @@ export async function syncPaymentsIncremental() {
       return;
     }
 
+    const existingFacts = await sqliteRepo.find();
+    const keyByPaymentId = new Map<number, number>(
+      existingFacts.map(f => [f.paymentId, f.factPaymentKey])
+    );
+
     const factPayments: Partial<FactPayment>[] = changed
-      .filter(
-        (p) =>
-          customerKeyMap.has(p.customerId) &&
-          storeKeyMap.has(p.customer?.storeId)
-      )
-      .map((p) => ({
-        paymentId: p.paymentId,
-        dateKeyPaid: generateDateKey(p.paymentDate),
-        customerKey: customerKeyMap.get(p.customerId)!,
-        storeKey: storeKeyMap.get(p.customer.storeId)!,
-        staffId: p.staffId,
-        amount: p.amount,
-        lastUpdate: p.lastUpdate
-      }));
+    .filter(
+      (p) =>
+        customerKeyMap.has(p.customerId) &&
+        storeKeyMap.has(p.customer?.storeId)
+    )
+    .map((p) => ({
+      factPaymentKey: keyByPaymentId.get(p.paymentId),
+      paymentId: p.paymentId,
+      dateKeyPaid: generateDateKey(p.paymentDate),
+      customerKey: customerKeyMap.get(p.customerId)!,
+      storeKey: storeKeyMap.get(p.customer.storeId)!,
+      staffId: p.staffId,
+      amount: p.amount,
+      lastUpdate: p.lastUpdate,
+    }));
 
     const BATCH_SIZE = 500;
     for (let i = 0; i < factPayments.length; i += BATCH_SIZE) {

@@ -124,25 +124,31 @@ export async function syncRentalsIncremental() {
       return;
     }
 
+    const existingFacts = await sqliteRepo.find();
+    const keyByRentalId = new Map<number, number>(
+      existingFacts.map(f => [f.rentalId, f.factRentalKey])
+    );
+
     const factRentals: Partial<FactRental>[] = changed.map((r) => {
-      const filmId = r.inventory?.film?.filmId;
-      const storeId = r.customer?.storeId;
-      console.log('Rental Last Update:', r.lastUpdate);
-      return {
-        rentalId: r.rentalId,
-        dateKeyRented: generateDateKey(r.rentalDate),
-        dateKeyReturned: generateDateKey(r.returnDate),
-        filmKey: filmId ? filmKeyMap.get(filmId) ?? null : null,
-        storeKey: storeId ? storeKeyMap.get(storeId) ?? null : null,
-        customerKey: r.customerId ? customerKeyMap.get(r.customerId) ?? null : null,
-        staffId: r.staffId,
-        rentalDurationDays: r.returnDate
-          ? Math.ceil(
-              (r.returnDate.getTime() - r.rentalDate.getTime()) /
-                (1000 * 60 * 60 * 24)
-            )
-          : null,
-        lastUpdate: r.lastUpdate
+    const filmId = r.inventory?.film?.filmId;
+    const storeId = r.customer?.storeId;
+
+    return {
+      factRentalKey: keyByRentalId.get(r.rentalId),
+      rentalId: r.rentalId,
+      dateKeyRented: generateDateKey(r.rentalDate),
+      dateKeyReturned: generateDateKey(r.returnDate),
+      filmKey: filmId ? filmKeyMap.get(filmId) ?? null : null,
+      storeKey: storeId ? storeKeyMap.get(storeId) ?? null : null,
+      customerKey: r.customerId ? customerKeyMap.get(r.customerId) ?? null : null,
+      staffId: r.staffId,
+      rentalDurationDays: r.returnDate
+        ? Math.ceil(
+            (r.returnDate.getTime() - r.rentalDate.getTime()) /
+              (1000 * 60 * 60 * 24)
+          )
+        : null,
+      lastUpdate: r.lastUpdate,
       };
     });
 

@@ -73,7 +73,13 @@ export async function syncCustomersIncremental() {
       return;
     }
 
+    const existingDim = await sqliteRepo.find();
+    const keyByCustomerId = new Map<number, number>(
+      existingDim.map(d => [d.customerId, d.customerKey])
+    );
+
     const dimCustomers: Partial<DimCustomer>[] = changed.map(a => ({
+      customerKey: keyByCustomerId.get(a.customerId),
       customerId: a.customerId,
       firstName: a.firstName,
       lastName: a.lastName,
@@ -81,7 +87,7 @@ export async function syncCustomersIncremental() {
       city: a.address.city.city,
       country: a.address.city.country.country,
       lastUpdate: a.lastUpdate,
-    }));
+    }));       
 
     await sqliteRepo.save(dimCustomers);
 
