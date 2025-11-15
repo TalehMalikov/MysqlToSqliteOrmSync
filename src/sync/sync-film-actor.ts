@@ -83,20 +83,41 @@ export async function syncFilmActorsIncremental() {
     const actorKeyMap = new Map(dimActors.map(a => [a.actorId, a.actorKey]));
 
     const filmActors = await mysqlRepo.find();
-
-    const changed = filmActors.filter(fa => fa.lastUpdate > lastSync);
-
-    if (changed.length === 0) {
-      console.log("No new or updated film-actor relationships since last sync.");
-      return;
-    }
-
-    const bridgeFilmActors: Partial<BridgeFilmActor>[] = changed
-      .filter(fa => filmKeyMap.has(fa.filmId) && actorKeyMap.has(fa.actorId))
-      .map(fa => ({
-        filmKey: filmKeyMap.get(fa.filmId)!,
-        actorKey: actorKeyMap.get(fa.actorId)!,
-      }));
+	
+		const changed = filmActors.filter(fa => fa.lastUpdate > lastSync);
+		if (changed.length === 0) {
+		  console.log("No new or updated film-actor relationships since last sync.");
+		  return;
+		}
+	
+		const changedFilmIds = new Set(changed.map(fa => fa.filmId));
+	
+		const filmKeysToDelete = [...changedFilmIds]
+		.map(id => filmKeyMap.get(id))
+		.filter((k): k is number => !!k);
+	
+		if (filmKeysToDelete.length > 0) {
+		await sqliteRepo
+			.createQueryBuilder()
+			.delete()
+			.from(BridgeFilmActor)
+			.where("film_key IN (:...filmKeys)", { filmKeys: filmKeysToDelete })
+			.execute();
+		}
+	
+		const bridgeFilmActors: Partial<BridgeFilmActor>[] = [];
+	
+		for (const fa of filmActors) {
+		if (!changedFilmIds.has(fa.filmId)) continue;
+	
+		const filmKey = filmKeyMap.get(fa.filmId);
+		const actorKey = actorKeyMap.get(fa.actorId);
+		if (!filmKey || !actorKey) continue;
+	
+		bridgeFilmActors.push({ filmKey, actorKey });
+		}
+	
+		if (bridgeFilmActors.length === 0) return;
 
     const BATCH_SIZE = 500;
     for (let i = 0; i < bridgeFilmActors.length; i += BATCH_SIZE) {

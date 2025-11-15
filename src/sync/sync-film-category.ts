@@ -82,28 +82,45 @@ export async function syncFilmCategoriesIncremental() {
     const filmKeyMap = new Map(dimFilms.map(f => [f.filmId, f.filmKey]));
     const categoryKeyMap = new Map(dimCategories.map(c => [c.categoryId, c.categoryKey]));
 
-    const filmCategories = await mysqlRepo.find();
-    const changed = filmCategories.filter(fc => fc.lastUpdate > lastSync);
-    if (changed.length === 0) return;
-
-    const existing = await sqliteRepo.find();
-    const seen = new Set(existing.map(b => `${b.filmKey}-${b.categoryKey}`));
-
-    const bridgeFilmCategories: Partial<BridgeFilmCategory>[] = [];
-
-    for (const fc of changed) {
-      const filmKey = filmKeyMap.get(fc.filmId);
-      const categoryKey = categoryKeyMap.get(fc.categoryId);
-      if (!filmKey || !categoryKey) continue;
-
-      const key = `${filmKey}-${categoryKey}`;
-      if (seen.has(key)) continue;
-
-      seen.add(key);
-      bridgeFilmCategories.push({ filmKey, categoryKey });
-    }
-
-    if (bridgeFilmCategories.length === 0) return;
+		const filmCategories = await mysqlRepo.find();
+	
+		const changed = filmCategories.filter(fc => fc.lastUpdate > lastSync);
+		if (changed.length === 0) {
+		  console.log("No new or updated film-category relationships since last sync.");
+		  return;
+		}
+	
+		const changedFilmIds = new Set(changed.map(fc => fc.filmId));
+	
+		const filmKeysToDelete = [...changedFilmIds]
+		.map(id => filmKeyMap.get(id))
+		.filter((k): k is number => !!k);
+	
+		if (filmKeysToDelete.length > 0) {
+		await sqliteRepo
+			.createQueryBuilder()
+			.delete()
+			.from(BridgeFilmCategory)
+			.where("film_key IN (:...filmKeys)", { filmKeys: filmKeysToDelete })
+			.execute();
+		}
+	
+		const bridgeFilmCategories: Partial<BridgeFilmCategory>[] = [];
+	
+		for (const fc of filmCategories) {
+		if (!changedFilmIds.has(fc.filmId)) continue;
+	
+		const filmKey = filmKeyMap.get(fc.filmId);
+		const categoryKey = categoryKeyMap.get(fc.categoryId);
+		if (!filmKey || !categoryKey) continue;
+	
+		bridgeFilmCategories.push({ filmKey, categoryKey });
+		}
+	
+		if (bridgeFilmCategories.length === 0) {
+		console.log("No film-category relationships to insert for changed films.");
+		return;
+		}
 
     const BATCH_SIZE = 500;
     for (let i = 0; i < bridgeFilmCategories.length; i += BATCH_SIZE) {
