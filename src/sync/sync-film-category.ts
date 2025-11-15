@@ -83,20 +83,27 @@ export async function syncFilmCategoriesIncremental() {
     const categoryKeyMap = new Map(dimCategories.map(c => [c.categoryId, c.categoryKey]));
 
     const filmCategories = await mysqlRepo.find();
-
     const changed = filmCategories.filter(fc => fc.lastUpdate > lastSync);
+    if (changed.length === 0) return;
 
-    if (changed.length === 0) {
-      console.log("No new or updated film-category relationships since last sync.");
-      return;
+    const existing = await sqliteRepo.find();
+    const seen = new Set(existing.map(b => `${b.filmKey}-${b.categoryKey}`));
+
+    const bridgeFilmCategories: Partial<BridgeFilmCategory>[] = [];
+
+    for (const fc of changed) {
+      const filmKey = filmKeyMap.get(fc.filmId);
+      const categoryKey = categoryKeyMap.get(fc.categoryId);
+      if (!filmKey || !categoryKey) continue;
+
+      const key = `${filmKey}-${categoryKey}`;
+      if (seen.has(key)) continue;
+
+      seen.add(key);
+      bridgeFilmCategories.push({ filmKey, categoryKey });
     }
 
-    const bridgeFilmCategories: Partial<BridgeFilmCategory>[] = changed
-      .filter(fc => filmKeyMap.has(fc.filmId) && categoryKeyMap.has(fc.categoryId))
-      .map(fc => ({
-        filmKey: filmKeyMap.get(fc.filmId)!,
-        categoryKey: categoryKeyMap.get(fc.categoryId)!,
-      }));
+    if (bridgeFilmCategories.length === 0) return;
 
     const BATCH_SIZE = 500;
     for (let i = 0; i < bridgeFilmCategories.length; i += BATCH_SIZE) {
