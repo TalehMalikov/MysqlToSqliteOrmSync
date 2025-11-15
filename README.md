@@ -1,5 +1,6 @@
 # MysqlToSqliteOrmSync
 
+
 ## 1. Project Overview & Purpose
 
 **MysqlToSqliteOrmSync** is a TypeScript ETL pipeline that:
@@ -95,19 +96,19 @@ tests/
 
 ### **ORM**
 
-* **TypeORM** for database connections/entities
+* **[TypeORM](https://typeorm.io/)** for database connections/entities
 
   * MySQL → OLTP
   * SQLite → Data Warehouse
 
 ### **Databases**
 
-* **MySQL**: source transactional DB
-* **SQLite**: target analytics DW
+* **[MySQL](https://www.mysql.com/)**: source transactional DB
+* **[SQLite](https://www.sqlite.org/)**: target analytics DW
 
 ### **Testing**
 
-* **Jest** + **ts-jest** for integration tests
+* **[Jest](https://jestjs.io/)** + **[ts-jest](https://kulshekhar.github.io/ts-jest/)** for integration tests
 * Tests connect to real databases and print structured summary tables
 
 ### **Other**
